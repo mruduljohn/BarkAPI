@@ -97,6 +97,30 @@ Options:
   --interval <seconds>   Check interval (default: 30)
 ```
 
+### `barkapi diff`
+
+Compares two OpenAPI spec versions and shows schema differences.
+
+```bash
+barkapi diff <old-spec> <new-spec> [options]
+
+Options:
+  --json    Output as JSON
+```
+
+### `barkapi ci-gen`
+
+Generates a GitHub Actions workflow file for automated contract checking.
+
+```bash
+barkapi ci-gen [options]
+
+Options:
+  --config <path>              Path to .barkapi.yml
+  --base-url-var <var>         GitHub Actions variable name (default: vars.STAGING_URL)
+  --output <path>              Output path (default: .github/workflows/barkapi.yml)
+```
+
 ### `barkapi report`
 
 Runs a check and prints results.
@@ -122,6 +146,10 @@ auth:
   type: bearer              # bearer | header | query
   token_env: API_TOKEN      # reads from environment variable
 
+# Optional: path parameters
+path_params:
+  id: "1"
+
 # Optional: filter which endpoints to check
 endpoints:
   include:
@@ -135,23 +163,38 @@ endpoints:
 
 The `barkapi dev` command launches a web dashboard at `http://localhost:3100` with:
 
-- **Endpoint health map** — color-coded green/yellow/red grid
-- **Drift history timeline** — area chart showing drift trends over time
-- **Side-by-side JSON diffs** — expected vs actual for each drifted field
-- **Alerting** — configure Slack webhook and email notifications
+- **Bento grid layout** — health ring, stat cards, drift distribution at a glance
+- **Schema viewer** — interactive tree of your OpenAPI schema with drift annotations inline
+- **Endpoint health map** — color-coded grid showing status of every endpoint
+- **Drift history** — grouped by field path with side-by-side expected vs actual diffs
+- **Timeline charts** — area charts showing drift trends over time
+- **Breadcrumb navigation** — always know where you are
+- **Alerting** — Slack webhook and email notifications
+- **Real-time updates** — auto-refreshes every 3s, no manual refresh needed
 
-The dashboard auto-refreshes every 3 seconds via a shared SQLite database. No manual pushing required.
+## Drift Detection
+
+| Drift Type | Severity | What it means |
+|------------|----------|---------------|
+| Removed required field | `breaking` | A required field is gone |
+| Removed optional field | `warning` | An optional field disappeared |
+| Type changed | `breaking` | Field type shifted (e.g. `string` → `number`) |
+| Nullable → non-null | `breaking` | Consumers handling null will break |
+| Non-null → nullable | `warning` | Field can now be null |
+| Required changed | `breaking` | Required/optional status changed |
+| Enum changed | `warning` | Allowed enum values differ |
+| Format changed | `warning` | Field format differs |
+| Undocumented field added | `info` | Response has a field not in the spec |
 
 ## CI Integration
 
 ```yaml
-# GitHub Actions example
+# GitHub Actions
 - name: Check API contracts
-  run: |
-    npx barkapi check --spec openapi.yaml --base-url ${{ vars.STAGING_URL }}
+  run: npx barkapi check --spec openapi.yaml --base-url ${{ vars.STAGING_URL }}
 ```
 
-The `check` command exits with code 1 on breaking drift, failing your pipeline automatically.
+Or generate a workflow automatically: `barkapi ci-gen`
 
 ## License
 

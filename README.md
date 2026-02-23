@@ -10,15 +10,15 @@
 </p>
 
 <p align="center">
+  <a href="https://www.npmjs.com/package/barkapi"><img src="https://img.shields.io/npm/v/barkapi" alt="npm version" /></a>
   <img src="https://img.shields.io/badge/node-%3E%3D18-brightgreen" alt="Node.js >= 18" />
   <img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT License" />
-  <img src="https://img.shields.io/badge/sqlite-embedded-orange" alt="SQLite" />
   <img src="https://img.shields.io/badge/typescript-strict-blue" alt="TypeScript" />
 </p>
 
 ---
 
-**BarkAPI** is a developer tool that parses your OpenAPI spec, hits your live endpoints, compares response shapes, and reports mismatches — like **ESLint for your API contracts**. Ships with a CLI for your terminal and CI pipelines, plus a dark-mode web dashboard for visualization and monitoring.
+**BarkAPI** parses your OpenAPI spec, hits your live endpoints, compares response shapes, and reports mismatches — like **ESLint for your API contracts**. Ships with a CLI for your terminal and CI pipelines, plus a real-time web dashboard with schema visualization and drift annotations.
 
 ```
 GET /api/users/:id
@@ -33,56 +33,40 @@ GET /api/orders
 
 ---
 
-## Features
-
-- **Zero-config setup** — auto-detects your OpenAPI spec and project type
-- **Recursive schema diffing** — catches type changes, missing fields, nullability shifts, and undocumented additions
-- **Severity classification** — `breaking` / `warning` / `info` so you know what matters
-- **CI-friendly** — exits with code 1 on breaking drift, plug it into any pipeline
-- **Continuous watch mode** — monitor endpoints on an interval
-- **`barkapi dev`** — one command starts watch mode + dashboard, auto-opens browser
-- **Realtime dashboard** — auto-refreshes every 3s via shared SQLite database, no manual pushing
-- **Web dashboard** — endpoint health map, drift history timeline, side-by-side JSON diffs
-- **Alerting** — configure Slack webhook and email notifications
-- **Embedded SQLite** — no external database to set up or maintain
-- **Monorepo** — shared core engine, separate CLI and dashboard packages
-
----
-
-## Quick Start
-
-### Install from npm
+## Install
 
 ```bash
 npm install -g barkapi
 ```
 
-### Or run from source
+### Prerequisites
 
-```bash
-# Install dependencies
-npm install
-
-# Build all packages
-npm run build
-```
-
-### Usage
-
-```bash
-# Navigate to your API project and initialize
-cd /path/to/your-api
-barkapi init --spec openapi.yaml --base-url http://localhost:3000
-
-# Start dashboard + watch mode (opens browser automatically)
-barkapi dev
-```
-
-That's it — two commands. The dashboard opens at `http://localhost:3100` and auto-refreshes every 3 seconds as new check results come in. No manual pushing required.
+- **Node.js >= 18**
+- **Build tools** for native addon compilation (`better-sqlite3`):
+  - macOS: `xcode-select --install`
+  - Ubuntu/Debian: `sudo apt install build-essential python3`
+  - Windows: install the "Desktop development with C++" workload from Visual Studio Build Tools
 
 ---
 
-## CLI Reference
+## Quick Start
+
+```bash
+# 1. Navigate to your API project
+cd /path/to/your-api
+
+# 2. Initialize — auto-detects your OpenAPI spec
+barkapi init --spec openapi.yaml --base-url http://localhost:3000
+
+# 3. Start dashboard + watch mode (opens browser automatically)
+barkapi dev
+```
+
+That's it — two commands. The dashboard opens at `http://localhost:3100` and auto-refreshes every 3 seconds.
+
+---
+
+## Commands
 
 ### `barkapi init`
 
@@ -99,20 +83,6 @@ Options:
 
 Auto-detects spec files at common paths: `openapi.yaml`, `swagger.json`, `docs/openapi.yml`, etc.
 
-### `barkapi dev`
-
-The all-in-one development command. Starts the web dashboard and watch mode together, sharing the same SQLite database. Auto-opens your browser after 3 seconds.
-
-```bash
-barkapi dev [options]
-
-Options:
-  --config <path>        Path to .barkapi.yml
-  --interval <seconds>   Check interval (default: 30)
-  --port <port>          Dashboard port (default: 3100)
-  --no-open              Don't auto-open browser
-```
-
 ### `barkapi check`
 
 Parses your spec, calls each endpoint, diffs the response against the expected schema, and prints an ESLint-style report.
@@ -128,9 +98,23 @@ Options:
 
 **Exit code 1** if any breaking drift is detected — perfect for CI gates.
 
+### `barkapi dev`
+
+The all-in-one development command. Starts the web dashboard and watch mode together. Auto-opens your browser.
+
+```bash
+barkapi dev [options]
+
+Options:
+  --config <path>        Path to .barkapi.yml
+  --interval <seconds>   Check interval (default: 30)
+  --port <port>          Dashboard port (default: 3100)
+  --no-open              Don't auto-open browser
+```
+
 ### `barkapi watch`
 
-Runs checks continuously on an interval. Great for local development.
+Runs checks continuously on an interval.
 
 ```bash
 barkapi watch [options]
@@ -140,16 +124,39 @@ Options:
   --interval <seconds>   Check interval (default: 30)
 ```
 
+### `barkapi diff`
+
+Compares two OpenAPI spec versions and shows schema differences between them.
+
+```bash
+barkapi diff <old-spec> <new-spec> [options]
+
+Options:
+  --json    Output as JSON
+```
+
+### `barkapi ci-gen`
+
+Generates a GitHub Actions workflow file for automated contract checking.
+
+```bash
+barkapi ci-gen [options]
+
+Options:
+  --config <path>              Path to .barkapi.yml
+  --base-url-var <var>         GitHub Actions variable name (default: vars.STAGING_URL)
+  --output <path>              Output path (default: .github/workflows/barkapi.yml)
+```
+
 ### `barkapi report`
 
-Runs a check and prints results. The `--push` flag is **deprecated** — the dashboard now reads directly from the shared database, so pushing is no longer needed. Use `barkapi dev` instead.
+Runs a check and prints results.
 
 ```bash
 barkapi report [options]
 
 Options:
   --config <path>   Path to .barkapi.yml
-  --push            (deprecated) Push results to dashboard
 ```
 
 ---
@@ -168,8 +175,9 @@ auth:
   type: bearer              # bearer | header | query
   token_env: API_TOKEN      # reads from environment variable
 
-# Optional: dashboard URL (deprecated, used by report --push)
-# dashboard_url: http://localhost:3100
+# Optional: path parameters for parameterized endpoints
+path_params:
+  id: "1"
 
 # Optional: filter which endpoints to check
 endpoints:
@@ -201,49 +209,76 @@ The diff engine performs recursive structural comparison between your OpenAPI sp
 | Type changed | `breaking` | Field type shifted (e.g. `string` → `number`) |
 | Nullable → non-null | `breaking` | Consumers handling null will break |
 | Non-null → nullable | `warning` | Field can now be null |
-| Optional → required | `breaking` | New constraint on request/response |
+| Required changed | `breaking` | Required/optional status changed |
+| Enum changed | `warning` | Allowed enum values differ |
+| Format changed | `warning` | Field format differs (e.g. `date-time` missing) |
 | Undocumented field added | `info` | Response has a field not in the spec |
 
 ---
 
 ## Dashboard
 
-The web dashboard runs on **port 3100** and provides a realtime visual interface for monitoring drift across all your projects.
+The `barkapi dev` command launches a web dashboard at `http://localhost:3100` with:
 
-The easiest way to use the dashboard is via `barkapi dev`, which starts it automatically. You can also run it standalone:
+- **Bento grid layout** — health ring, stat cards, drift distribution at a glance
+- **Schema viewer** — interactive tree of your OpenAPI schema with drift annotations inline
+- **Endpoint health map** — color-coded grid showing status of every endpoint
+- **Drift history** — grouped by field path with side-by-side expected vs actual diffs
+- **Timeline charts** — area charts showing drift trends over time
+- **Breadcrumb navigation** — always know where you are: `Projects > My API > GET /users/{id}`
+- **Alerting** — configure Slack webhook and email notifications
+- **Real-time updates** — auto-refreshes every 3s via shared SQLite database
 
-```bash
-# Development
-npm run dev:dashboard
-
-# Production
-npm run build:dashboard
-npm run start -w packages/dashboard
-```
-
-### Realtime Updates
-
-The dashboard polls the API every 3 seconds and updates automatically. A pulsing green "Live" indicator in the sidebar shows that realtime monitoring is active. No manual refresh or `report --push` needed — the CLI and dashboard share the same SQLite database (WAL mode supports concurrent reads and writes).
-
-You can point the dashboard at any project's database using environment variables:
-
-```bash
-# Point at a specific DB file
-BARKAPI_DB_PATH=/path/to/.barkapi/barkapi.db npm run dev:dashboard
-
-# Or point at the project directory
-BARKAPI_PROJECT_DIR=/path/to/your-api npm run dev:dashboard
-```
-
-### Pages
+### Dashboard Pages
 
 | Page | Route | Description |
 |------|-------|-------------|
-| **Projects** | `/` | Overview cards with health summary per project |
-| **Health Map** | `/projects/:id` | Grid of endpoints, color-coded green/yellow/red, plus summary stats |
-| **Endpoint Detail** | `/projects/:id/endpoints/:eid` | Drift list with side-by-side expected vs actual |
-| **Timeline** | `/projects/:id/timeline` | Area chart of drift over time + check run history |
-| **Alerts** | `/projects/:id/alerts` | Configure Slack and email notifications |
+| **Projects** | `/` | Overview cards with health donut, labeled status dots, drift count |
+| **Project Detail** | `/projects/:id` | Bento grid with health ring, passing/breaking/warning stats, drift type distribution, endpoint health map |
+| **Endpoint Detail** | `/projects/:id/endpoints/:eid` | Three tabs — **Overview** (stats), **Schema** (annotated tree), **History** (drift list grouped by field) |
+| **Timeline** | `/projects/:id/timeline` | Area/line/bar charts + check run cards with mini health rings |
+| **Alerts** | `/projects/:id/alerts` | Configure Slack and email notifications with severity filters |
+
+---
+
+## Example Project
+
+The `examples/` directory contains a complete demo with intentional drift:
+
+```bash
+# 1. Start the example API server (has intentional drift from spec)
+cd examples
+node server.js
+
+# 2. In another terminal, run BarkAPI against it
+cd examples
+barkapi init --spec openapi.yaml --base-url http://localhost:4000
+barkapi dev
+```
+
+The example server returns responses that intentionally differ from its OpenAPI spec:
+- `GET /api/users/:id` — `email` is a number (spec says string), missing `created_at`, extra `avatar` field
+- `GET /api/products/:id` — `price` is a string (spec says number)
+
+---
+
+## CI Integration
+
+### GitHub Actions
+
+```yaml
+- name: Check API contracts
+  run: |
+    npx barkapi check --spec openapi.yaml --base-url ${{ vars.STAGING_URL }}
+```
+
+Or generate a workflow file automatically:
+
+```bash
+barkapi ci-gen --base-url-var vars.STAGING_URL
+```
+
+The `check` command exits with code 1 on breaking drift, failing your pipeline automatically.
 
 ---
 
@@ -252,25 +287,28 @@ BARKAPI_PROJECT_DIR=/path/to/your-api npm run dev:dashboard
 ```
 BarkAPI/
 ├── packages/
-│   ├── core/                   @barkapi/core
+│   ├── core/                   @barkapi/core — shared engine
 │   │   └── src/
 │   │       ├── parser/         OpenAPI parser + response schema inferrer
 │   │       ├── diff/           Recursive schema differ + severity classifier
 │   │       ├── db/             SQLite connection, schema migration, queries
 │   │       └── models/         CRUD for projects, endpoints, check runs, drifts, alerts
-│   ├── cli/                    @barkapi/cli
+│   ├── cli/                    barkapi — the npm package
 │   │   └── src/
-│   │       ├── commands/       init, check, watch, report, dev
+│   │       ├── commands/       init, check, watch, report, dev, diff, ci-gen
 │   │       ├── config/         .barkapi.yml loader + project detector
 │   │       ├── runner/         HTTP endpoint caller + check orchestrator
 │   │       └── output/         ESLint-style chalk formatter
-│   └── dashboard/              @barkapi/dashboard
+│   └── dashboard/              @barkapi/dashboard — Next.js web UI
 │       └── app/
-│           ├── api/            REST API routes
-│           ├── components/     Sidebar, LiveIndicator, EmptyState, UI primitives
-│           ├── hooks/          usePolling (realtime data fetching)
-│           ├── lib/            DB connection utilities
+│           ├── api/            REST API routes (projects, endpoints, stats, schema, SSE)
+│           ├── components/     UI primitives, schema viewer, health ring, breadcrumbs
+│           ├── hooks/          usePolling, useSSE (real-time data fetching)
 │           └── projects/       Project pages (health map, detail, timeline, alerts)
+├── examples/                   Demo project with intentional drift
+│   ├── openapi.yaml            Sample OpenAPI spec
+│   ├── server.js               API server with mismatched responses
+│   └── .barkapi.yml            Pre-configured BarkAPI config
 ```
 
 ### Tech Stack
@@ -281,37 +319,13 @@ BarkAPI/
 | CLI framework | Commander.js |
 | Terminal UI | chalk + ora |
 | API parsing | @apidevtools/swagger-parser |
-| Database | SQLite via better-sqlite3 |
+| Database | SQLite via better-sqlite3 (WAL mode) |
 | Web framework | Next.js 14 (App Router) |
 | Styling | Tailwind CSS (dark mode) |
+| Animations | Framer Motion |
 | Charts | Recharts |
 | Icons | Lucide React |
 | Monorepo | npm workspaces |
-
-### Database Schema
-
-Five tables with foreign keys and indexes:
-
-- **`projects`** — name, spec_path, base_url, timestamps
-- **`endpoints`** — method, path, status (healthy/drifted/error), unique per project
-- **`check_runs`** — timestamps, passing/breaking/warning counts
-- **`drifts`** — field_path, drift_type, severity, expected vs actual values
-- **`alert_configs`** — type (slack/email), JSON config, min severity, enabled flag
-
----
-
-## CI Integration
-
-Add BarkAPI to your CI pipeline to catch contract drift before it reaches production:
-
-```yaml
-# GitHub Actions example
-- name: Check API contracts
-  run: |
-    npx barkapi check --spec openapi.yaml --base-url ${{ vars.STAGING_URL }}
-```
-
-The `check` command exits with code 1 on breaking drift, failing your pipeline automatically.
 
 ---
 
@@ -319,11 +333,11 @@ The `check` command exits with code 1 on breaking drift, failing your pipeline a
 
 ```bash
 # Clone and install
-git clone <repo-url>
+git clone https://github.com/barkapi/barkapi.git
 cd BarkAPI
 npm install
 
-# Build everything
+# Build all packages
 npm run build
 
 # Build individual packages

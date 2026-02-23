@@ -5,19 +5,38 @@
 :root {
   --background: #09090b;
   --foreground: #fafafa;
-  --surface: #18181b;
-  --border-color: #27272a;
+  --surface: rgba(24, 24, 27, 0.8);
+  --surface-hover: rgba(39, 39, 42, 0.5);
+  --border-color: rgba(63, 63, 70, 0.4);
   --accent: #3b82f6;
   --muted: #71717a;
+  --glow: rgba(59, 130, 246, 0.08);
 }
 
 body {
   background: var(--background);
+  background-image: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(59, 130, 246, 0.08), transparent);
   color: var(--foreground);
-  font-family: system-ui, -apple-system, sans-serif;
 }
 
-::-webkit-scrollbar { width: 6px; height: 6px; }
+@layer utilities {
+  .glass {
+    background: var(--surface);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  .focus-ring {
+    @apply outline-none ring-0 transition-shadow;
+  }
+
+  .focus-ring:focus {
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.4);
+    outline: none;
+  }
+}
+
+::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #27272a; border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: #3f3f46; }
+::-webkit-scrollbar-thumb { background: rgba(63, 63, 70, 0.5); border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(82, 82, 91, 0.6); }

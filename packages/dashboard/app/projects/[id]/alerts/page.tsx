@@ -1,8 +1,18 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import { MessageSquare, Mail } from "lucide-react";
 import { Card, Badge, Button } from "../../../components/ui";
+import { Breadcrumbs } from "../../../components/breadcrumbs";
+import { PageTransition } from "../../../components/page-transition";
+import { SkeletonCard } from "../../../components/skeleton";
 import { ProjectNav } from "../nav";
+import { usePolling } from "../../../hooks/use-polling";
+
+interface Project {
+  id: number;
+  name: string;
+}
 
 interface AlertConfig {
   id: number;
@@ -12,8 +22,26 @@ interface AlertConfig {
   enabled: number;
 }
 
+function ToggleSwitch({ enabled, onToggle }: { enabled: boolean; onToggle: () => void }) {
+  return (
+    <button
+      onClick={onToggle}
+      className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+        enabled ? "bg-green-500/30" : "bg-zinc-700"
+      }`}
+    >
+      <span
+        className={`inline-block h-4 w-4 rounded-full bg-white transition-transform ${
+          enabled ? "translate-x-4" : "translate-x-0.5"
+        }`}
+      />
+    </button>
+  );
+}
+
 export default function AlertsPage() {
   const params = useParams();
+  const projectId = params.id as string;
   const [alerts, setAlerts] = useState<AlertConfig[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -21,15 +49,17 @@ export default function AlertsPage() {
   const [formUrl, setFormUrl] = useState("");
   const [formSeverity, setFormSeverity] = useState("breaking");
 
+  const { data: project } = usePolling<Project>(`/api/projects/${projectId}`);
+
   useEffect(() => {
-    fetch(`/api/projects/${params.id}/alerts`)
+    fetch(`/api/projects/${projectId}/alerts`)
       .then((r) => r.json())
       .then(setAlerts)
       .finally(() => setLoading(false));
-  }, [params.id]);
+  }, [projectId]);
 
   const fetchAlerts = () => {
-    fetch(`/api/projects/${params.id}/alerts`)
+    fetch(`/api/projects/${projectId}/alerts`)
       .then((r) => r.json())
       .then(setAlerts)
       .finally(() => setLoading(false));
@@ -41,7 +71,7 @@ export default function AlertsPage() {
         ? { webhook_url: formUrl }
         : { email: formUrl };
 
-    await fetch(`/api/projects/${params.id}/alerts`, {
+    await fetch(`/api/projects/${projectId}/alerts`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -57,14 +87,14 @@ export default function AlertsPage() {
   };
 
   const handleDelete = async (id: number) => {
-    await fetch(`/api/projects/${params.id}/alerts?id=${id}`, {
+    await fetch(`/api/projects/${projectId}/alerts?id=${id}`, {
       method: "DELETE",
     });
     fetchAlerts();
   };
 
   const handleToggle = async (alert: AlertConfig) => {
-    await fetch(`/api/projects/${params.id}/alerts`, {
+    await fetch(`/api/projects/${projectId}/alerts`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -76,12 +106,19 @@ export default function AlertsPage() {
   };
 
   return (
-    <div>
+    <PageTransition>
+      <Breadcrumbs
+        items={[
+          { label: "Projects", href: "/" },
+          { label: project?.name || "...", href: `/projects/${projectId}` },
+          { label: "Alerts" },
+        ]}
+      />
       <h1 className="text-2xl font-bold mb-2">Alerts</h1>
       <p className="text-[var(--muted)] text-sm mb-4">
         Configure notifications for drift events
       </p>
-      <ProjectNav projectId={params.id as string} active="alerts" />
+      <ProjectNav projectId={projectId} active="alerts" />
 
       <div className="mt-6">
         <div className="flex justify-between items-center mb-4">
@@ -105,7 +142,7 @@ export default function AlertsPage() {
                   onChange={(e) =>
                     setFormType(e.target.value as "slack" | "email")
                   }
-                  className="w-full bg-black border border-[var(--border-color)] rounded px-3 py-2 text-sm"
+                  className="w-full bg-black/50 border border-[var(--border-color)] rounded-lg px-3 py-2 text-sm focus-ring"
                 >
                   <option value="slack">Slack Webhook</option>
                   <option value="email">Email</option>
@@ -124,7 +161,7 @@ export default function AlertsPage() {
                       ? "https://hooks.slack.com/..."
                       : "alerts@example.com"
                   }
-                  className="w-full bg-black border border-[var(--border-color)] rounded px-3 py-2 text-sm"
+                  className="w-full bg-black/50 border border-[var(--border-color)] rounded-lg px-3 py-2 text-sm focus-ring"
                 />
               </div>
               <div>
@@ -134,7 +171,7 @@ export default function AlertsPage() {
                 <select
                   value={formSeverity}
                   onChange={(e) => setFormSeverity(e.target.value)}
-                  className="w-full bg-black border border-[var(--border-color)] rounded px-3 py-2 text-sm"
+                  className="w-full bg-black/50 border border-[var(--border-color)] rounded-lg px-3 py-2 text-sm focus-ring"
                 >
                   <option value="breaking">Breaking only</option>
                   <option value="warning">Warning and above</option>
@@ -147,11 +184,13 @@ export default function AlertsPage() {
         )}
 
         {loading ? (
-          <p className="text-[var(--muted)]">Loading...</p>
+          <div className="space-y-2">
+            {[1, 2].map((i) => <SkeletonCard key={i} />)}
+          </div>
         ) : alerts.length === 0 && !showForm ? (
           <Card>
             <p className="text-[var(--muted)] text-center py-8">
-              No alerts configured.
+              No alerts configured. Add one to get notified when drifts are detected.
             </p>
           </Card>
         ) : (
@@ -164,9 +203,11 @@ export default function AlertsPage() {
                   className="flex items-center justify-between"
                 >
                   <div className="flex items-center gap-3">
-                    <span className="text-lg">
-                      {alert.type === "slack" ? "💬" : "📧"}
-                    </span>
+                    {alert.type === "slack" ? (
+                      <MessageSquare className="w-5 h-5 text-[var(--muted)]" />
+                    ) : (
+                      <Mail className="w-5 h-5 text-[var(--muted)]" />
+                    )}
                     <div>
                       <p className="text-sm font-medium">
                         {alert.type === "slack"
@@ -189,17 +230,11 @@ export default function AlertsPage() {
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => handleToggle(alert)}
-                      className={`text-xs px-2 py-1 rounded ${
-                        alert.enabled
-                          ? "bg-green-500/10 text-green-400"
-                          : "bg-zinc-500/10 text-zinc-400"
-                      }`}
-                    >
-                      {alert.enabled ? "Enabled" : "Disabled"}
-                    </button>
+                  <div className="flex items-center gap-3">
+                    <ToggleSwitch
+                      enabled={!!alert.enabled}
+                      onToggle={() => handleToggle(alert)}
+                    />
                     <Button
                       variant="danger"
                       onClick={() => handleDelete(alert.id)}
@@ -213,6 +248,6 @@ export default function AlertsPage() {
           </div>
         )}
       </div>
-    </div>
+    </PageTransition>
   );
 }

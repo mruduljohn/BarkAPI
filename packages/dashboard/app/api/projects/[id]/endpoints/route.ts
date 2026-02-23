@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { listEndpoints } from "@barkapi/core";
+import { listEndpoints, countDriftsByEndpoint } from "@barkapi/core";
 import { getDashboardDb } from "../../../../lib/db";
 
 export async function GET(
@@ -8,5 +8,12 @@ export async function GET(
 ) {
   getDashboardDb();
   const endpoints = listEndpoints(parseInt(params.id));
-  return NextResponse.json(endpoints);
+
+  // Enrich with drift count per endpoint
+  const enriched = endpoints.map((ep: any) => ({
+    ...ep,
+    drift_count: countDriftsByEndpoint(ep.id),
+  }));
+
+  return NextResponse.json(enriched);
 }

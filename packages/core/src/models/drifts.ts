@@ -48,6 +48,60 @@ export function countDriftsByEndpoint(endpointId: number): number {
   return row.count;
 }
 
+export function countDriftsByType(endpointId: number): Record<string, number> {
+  const db = getDb();
+  const rows = db.prepare(
+    'SELECT drift_type, COUNT(*) as count FROM drifts WHERE endpoint_id = ? GROUP BY drift_type'
+  ).all(endpointId) as { drift_type: string; count: number }[];
+  const result: Record<string, number> = {};
+  for (const row of rows) result[row.drift_type] = row.count;
+  return result;
+}
+
+export function countDriftsBySeverity(endpointId: number): Record<string, number> {
+  const db = getDb();
+  const rows = db.prepare(
+    'SELECT severity, COUNT(*) as count FROM drifts WHERE endpoint_id = ? GROUP BY severity'
+  ).all(endpointId) as { severity: string; count: number }[];
+  const result: Record<string, number> = {};
+  for (const row of rows) result[row.severity] = row.count;
+  return result;
+}
+
+export function countDriftsByTypeForProject(projectId: number): Record<string, number> {
+  const db = getDb();
+  const rows = db.prepare(
+    `SELECT d.drift_type, COUNT(*) as count FROM drifts d
+     JOIN endpoints e ON d.endpoint_id = e.id
+     WHERE e.project_id = ? GROUP BY d.drift_type`
+  ).all(projectId) as { drift_type: string; count: number }[];
+  const result: Record<string, number> = {};
+  for (const row of rows) result[row.drift_type] = row.count;
+  return result;
+}
+
+export function countDriftsBySeverityForProject(projectId: number): Record<string, number> {
+  const db = getDb();
+  const rows = db.prepare(
+    `SELECT d.severity, COUNT(*) as count FROM drifts d
+     JOIN endpoints e ON d.endpoint_id = e.id
+     WHERE e.project_id = ? GROUP BY d.severity`
+  ).all(projectId) as { severity: string; count: number }[];
+  const result: Record<string, number> = {};
+  for (const row of rows) result[row.severity] = row.count;
+  return result;
+}
+
+export function countTotalDriftsForProject(projectId: number): number {
+  const db = getDb();
+  const row = db.prepare(
+    `SELECT COUNT(*) as count FROM drifts d
+     JOIN endpoints e ON d.endpoint_id = e.id
+     WHERE e.project_id = ?`
+  ).get(projectId) as { count: number };
+  return row.count;
+}
+
 export function createDriftsBatch(
   checkRunId: number,
   endpointId: number,

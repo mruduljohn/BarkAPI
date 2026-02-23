@@ -25,6 +25,16 @@ export function listEndpoints(projectId: number): Endpoint[] {
   ).all(projectId) as Endpoint[];
 }
 
+export function countEndpointsByStatus(projectId: number): Record<string, number> {
+  const db = getDb();
+  const rows = db.prepare(
+    'SELECT status, COUNT(*) as count FROM endpoints WHERE project_id = ? GROUP BY status'
+  ).all(projectId) as { status: string; count: number }[];
+  const result: Record<string, number> = {};
+  for (const row of rows) result[row.status] = row.count;
+  return result;
+}
+
 export function updateEndpointStatus(id: number, status: Endpoint['status']): void {
   const db = getDb();
   db.prepare(
