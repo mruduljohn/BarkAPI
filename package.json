@@ -1,0 +1,21 @@
+{
+  "name": "barkapi",
+  "private": true,
+  "version": "0.1.0",
+  "description": "API Contract Drift Detector — Your API's watchdog",
+  "workspaces": [
+    "packages/core",
+    "packages/cli",
+    "packages/dashboard"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces",
+    "build:core": "npm run build -w packages/core",
+    "build:cli": "npm run build -w packages/cli",
+    "build:dashboard": "npm run build -w packages/dashboard",
+    "dev:dashboard": "npm run dev -w packages/dashboard"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

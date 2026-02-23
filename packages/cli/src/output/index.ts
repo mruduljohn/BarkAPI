@@ -1,0 +1,1 @@
+export { formatCheckResult } from './formatter';
