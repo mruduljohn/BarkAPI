@@ -17,7 +17,7 @@ const program = new Command();
 program
   .name('barkapi')
   .description('API Contract Drift Detector — Your API\'s watchdog')
-  .version('0.1.0');
+  .version('1.0.0');
 
 program.addCommand(initCommand);
 program.addCommand(checkCommand);
