@@ -2,7 +2,15 @@
   "name": "barkapi",
   "version": "0.1.0",
   "description": "API Contract Drift Detector — Your API's watchdog",
-  "keywords": ["api", "openapi", "swagger", "drift", "schema", "contract", "testing"],
+  "keywords": [
+    "api",
+    "openapi",
+    "swagger",
+    "drift",
+    "schema",
+    "contract",
+    "testing"
+  ],
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -15,13 +23,18 @@
     "barkapi": "dist/index.js"
   },
   "main": "dist/index.js",
-  "files": ["dist/", "README.md"],
+  "files": [
+    "dist/",
+    "README.md"
+  ],
   "publishConfig": {
     "access": "public"
   },
   "scripts": {
     "build": "tsc",
     "clean": "rm -rf dist",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "build:publish": "node scripts/build-publish.js",
     "prepublishOnly": "npm run build:publish"
   },
@@ -36,6 +49,7 @@
   },
   "devDependencies": {
     "@barkapi/core": "0.1.0",
-    "typescript": "^5.4.0"
+    "typescript": "^5.4.0",
+    "vitest": "^4.0.18"
   }
 }

@@ -1,7 +1,8 @@
 "use client";
+import { useState } from "react";
 import { useParams } from "next/navigation";
 import { usePolling } from "../../../hooks/use-polling";
-import { Card, Badge } from "../../../components/ui";
+import { Card, Badge, Button } from "../../../components/ui";
 import { ProjectNav } from "../nav";
 import { TimelineChart } from "./chart";
 
@@ -15,13 +16,20 @@ interface CheckRun {
   warning: number;
 }
 
+interface PaginatedResponse<T> {
+  data: T[];
+  pagination: { page: number; limit: number; total: number; totalPages: number };
+}
+
 export default function TimelinePage() {
   const params = useParams();
-  const { data: runs, loading, lastUpdated } = usePolling<CheckRun[]>(
-    `/api/projects/${params.id}/check-runs`
+  const [page, setPage] = useState(1);
+  const { data: response, loading, lastUpdated } = usePolling<PaginatedResponse<CheckRun>>(
+    `/api/projects/${params.id}/check-runs?page=${page}&limit=50`
   );
 
-  const checkRuns = runs || [];
+  const checkRuns = response?.data || [];
+  const pagination = response?.pagination;
 
   return (
     <div>
@@ -55,7 +63,7 @@ export default function TimelinePage() {
             </Card>
 
             <h3 className="text-lg font-semibold mb-3">
-              Check Runs ({checkRuns.length})
+              Check Runs ({pagination?.total ?? checkRuns.length})
             </h3>
             <div className="space-y-2">
               {checkRuns.map((run) => (
@@ -81,6 +89,28 @@ export default function TimelinePage() {
                 </Card>
               ))}
             </div>
+
+            {pagination && pagination.totalPages > 1 && (
+              <div className="flex items-center justify-center gap-3 mt-4">
+                <Button
+                  variant="secondary"
+                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                  disabled={page <= 1}
+                >
+                  Previous
+                </Button>
+                <span className="text-sm text-[var(--muted)]">
+                  Page {pagination.page} of {pagination.totalPages}
+                </span>
+                <Button
+                  variant="secondary"
+                  onClick={() => setPage(p => Math.min(pagination.totalPages, p + 1))}
+                  disabled={page >= pagination.totalPages}
+                >
+                  Next
+                </Button>
+              </div>
+            )}
           </>
         )}
       </div>

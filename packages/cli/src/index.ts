@@ -5,6 +5,12 @@ import { checkCommand } from './commands/check';
 import { watchCommand } from './commands/watch';
 import { reportCommand } from './commands/report';
 import { devCommand } from './commands/dev';
+import { ciGenCommand } from './commands/ci-gen';
+import { diffCommand } from './commands/diff';
+import { checkForUpdates } from './update-checker';
+
+// Non-blocking update check (fires and forgets)
+checkForUpdates();
 
 const program = new Command();
 
@@ -18,5 +24,7 @@ program.addCommand(checkCommand);
 program.addCommand(watchCommand);
 program.addCommand(reportCommand);
 program.addCommand(devCommand);
+program.addCommand(ciGenCommand);
+program.addCommand(diffCommand);
 
 program.parse();

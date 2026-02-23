@@ -10,6 +10,7 @@ import {
   finishCheckRun,
   createDriftsBatch,
   updateEndpointStatus,
+  sendNotifications,
 } from '@barkapi/core';
 import type { DriftResult, ParsedEndpoint } from '@barkapi/core';
 import type { BarkApiConfig } from '../config';
@@ -49,8 +50,9 @@ export async function runCheck(config: BarkApiConfig, dbPath?: string): Promise<
     );
   }
 
-  // Parse spec
-  const specPath = path.resolve(process.cwd(), config.spec);
+  // Parse spec — support both local paths and URLs
+  const isUrl = config.spec.startsWith('http://') || config.spec.startsWith('https://');
+  const specPath = isUrl ? config.spec : path.resolve(process.cwd(), config.spec);
   const parsedEndpoints = await parseOpenAPISpec(specPath);
 
   // Filter endpoints if configured
@@ -90,9 +92,24 @@ export async function runCheck(config: BarkApiConfig, dbPath?: string): Promise<
     const actualSchema = inferSchema(callResult.body);
     const drifts = diffSchemas(ep.responseSchema, actualSchema);
 
+    // Check response headers if spec defines them
+    if (ep.responseHeaders && callResult.headers) {
+      const headerDrifts = diffResponseHeaders(ep.responseHeaders, callResult.headers);
+      drifts.push(...headerDrifts);
+    }
+
     // Save drifts to DB
     if (drifts.length > 0) {
       createDriftsBatch(checkRun.id, endpoint.id, drifts);
+
+      // Fire alert notifications (non-blocking)
+      sendNotifications(project.id, {
+        projectName: config.project,
+        checkRunId: checkRun.id,
+        endpointMethod: ep.method,
+        endpointPath: ep.path,
+        drifts,
+      }).catch(() => {});
     }
 
     const hasBreaking = drifts.some(d => d.severity === 'breaking');
@@ -146,4 +163,32 @@ function filterEndpoints(endpoints: ParsedEndpoint[], config: BarkApiConfig): Pa
   }
 
   return filtered;
+}
+
+function diffResponseHeaders(
+  specHeaders: Record<string, { required: boolean; schema?: Record<string, any> }>,
+  actualHeaders: Record<string, string | string[] | undefined>
+): DriftResult[] {
+  const drifts: DriftResult[] = [];
+  const lowerActual: Record<string, string> = {};
+  for (const [k, v] of Object.entries(actualHeaders)) {
+    if (v !== undefined) {
+      lowerActual[k.toLowerCase()] = Array.isArray(v) ? v.join(', ') : v;
+    }
+  }
+
+  for (const [name, spec] of Object.entries(specHeaders)) {
+    const headerPath = `header.${name}`;
+    if (!(name in lowerActual)) {
+      drifts.push({
+        field_path: headerPath,
+        drift_type: 'removed',
+        severity: spec.required ? 'breaking' : 'warning',
+        expected: `present (${spec.required ? 'required' : 'optional'})`,
+        actual: 'missing',
+      });
+    }
+  }
+
+  return drifts;
 }

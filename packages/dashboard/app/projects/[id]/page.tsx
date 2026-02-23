@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { usePolling } from "../../hooks/use-polling";
+import { useSSE } from "../../hooks/use-sse";
 import { Card, Badge, StatusDot } from "../../components/ui";
 import { EmptyState } from "../../components/empty-state";
 import { ProjectNav } from "./nav";
@@ -50,12 +51,21 @@ export default function ProjectEndpoints() {
   const { data: project, loading: loadingProject, lastUpdated } = usePolling<Project>(
     `/api/projects/${projectId}`
   );
-  const { data: endpoints } = usePolling<Endpoint[]>(
-    `/api/projects/${projectId}/endpoints`
+
+  // SSE for real-time endpoint updates, with polling fallback
+  const sseEndpoints = useSSE<Endpoint[]>(`/api/sse?projectId=${projectId}`, { event: "endpoints" });
+  const pollEndpoints = usePolling<Endpoint[]>(
+    `/api/projects/${projectId}/endpoints`,
+    { enabled: !sseEndpoints.data }
   );
-  const { data: runs } = usePolling<CheckRun[]>(
-    `/api/projects/${projectId}/check-runs`
+  const endpoints = sseEndpoints.data || pollEndpoints.data;
+
+  const sseRuns = useSSE<CheckRun[]>(`/api/sse?projectId=${projectId}`, { event: "checkRuns" });
+  const pollRunsResponse = usePolling<{ data: CheckRun[] }>(
+    `/api/projects/${projectId}/check-runs?limit=10`,
+    { enabled: !sseRuns.data }
   );
+  const runs = sseRuns.data || pollRunsResponse.data?.data;
 
   if (loadingProject) {
     return <p className="text-[var(--muted)]">Loading...</p>;

@@ -103,6 +103,51 @@ export function diffSchemas(
     }
   }
 
+  // Enum validation — check if actual value (from inferred schema) violates spec enum
+  if (expected.enum && actual.enum) {
+    const expValues = new Set(expected.enum.map(String));
+    const newValues = actual.enum.filter((v: any) => !expValues.has(String(v)));
+    const removedValues = expected.enum.filter((v: any) => !new Set(actual.enum.map(String)).has(String(v)));
+
+    if (removedValues.length > 0) {
+      drifts.push({
+        field_path: path || '.',
+        drift_type: 'enum_changed',
+        severity: 'breaking',
+        expected: `enum [${expected.enum.join(', ')}]`,
+        actual: `removed values: [${removedValues.join(', ')}]`,
+      });
+    }
+    if (newValues.length > 0) {
+      drifts.push({
+        field_path: path || '.',
+        drift_type: 'enum_changed',
+        severity: 'warning',
+        expected: `enum [${expected.enum.join(', ')}]`,
+        actual: `new values: [${newValues.join(', ')}]`,
+      });
+    }
+  }
+
+  // Format validation — check if format changed
+  if (expected.format && actual.format && expected.format !== actual.format) {
+    drifts.push({
+      field_path: path || '.',
+      drift_type: 'format_changed',
+      severity: 'warning',
+      expected: expected.format,
+      actual: actual.format,
+    });
+  } else if (expected.format && !actual.format) {
+    drifts.push({
+      field_path: path || '.',
+      drift_type: 'format_changed',
+      severity: 'warning',
+      expected: expected.format,
+      actual: 'no format',
+    });
+  }
+
   return drifts;
 }
 

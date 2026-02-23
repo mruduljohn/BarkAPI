@@ -1,8 +1,9 @@
 "use client";
+import { useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { usePolling } from "../../../../hooks/use-polling";
-import { Card, Badge, CodeBlock, StatusDot } from "../../../../components/ui";
+import { Card, Badge, Button, CodeBlock, StatusDot } from "../../../../components/ui";
 
 interface Project {
   id: number;
@@ -38,10 +39,16 @@ const severityIcons: Record<string, string> = {
   info: "\u2139",
 };
 
+interface PaginatedResponse<T> {
+  data: T[];
+  pagination: { page: number; limit: number; total: number; totalPages: number };
+}
+
 export default function EndpointDetail() {
   const params = useParams();
   const projectId = params.id as string;
   const endpointId = params.eid as string;
+  const [page, setPage] = useState(1);
 
   const { data: project } = usePolling<Project>(
     `/api/projects/${projectId}`
@@ -49,8 +56,8 @@ export default function EndpointDetail() {
   const { data: endpoint, loading } = usePolling<Endpoint>(
     `/api/projects/${projectId}/endpoints/${endpointId}`
   );
-  const { data: drifts, lastUpdated } = usePolling<Drift[]>(
-    `/api/projects/${projectId}/endpoints/${endpointId}/drifts`
+  const { data: driftsResponse, lastUpdated } = usePolling<PaginatedResponse<Drift>>(
+    `/api/projects/${projectId}/endpoints/${endpointId}/drifts?page=${page}&limit=50`
   );
 
   if (loading) {
@@ -59,7 +66,8 @@ export default function EndpointDetail() {
 
   if (!project || !endpoint) return <div>Not found</div>;
 
-  const driftList = drifts || [];
+  const driftList = driftsResponse?.data || [];
+  const pagination = driftsResponse?.pagination;
 
   return (
     <div>
@@ -105,7 +113,7 @@ export default function EndpointDetail() {
       ) : (
         <div className="space-y-3">
           <h2 className="text-lg font-semibold">
-            Drifts ({driftList.length})
+            Drifts ({pagination?.total ?? driftList.length})
           </h2>
           {driftList.map((drift) => (
             <Card key={drift.id}>
@@ -146,6 +154,28 @@ export default function EndpointDetail() {
               </p>
             </Card>
           ))}
+
+          {pagination && pagination.totalPages > 1 && (
+            <div className="flex items-center justify-center gap-3 mt-4">
+              <Button
+                variant="secondary"
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                disabled={page <= 1}
+              >
+                Previous
+              </Button>
+              <span className="text-sm text-[var(--muted)]">
+                Page {pagination.page} of {pagination.totalPages}
+              </span>
+              <Button
+                variant="secondary"
+                onClick={() => setPage(p => Math.min(pagination.totalPages, p + 1))}
+                disabled={page >= pagination.totalPages}
+              >
+                Next
+              </Button>
+            </div>
+          )}
         </div>
       )}
     </div>

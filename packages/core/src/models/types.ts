@@ -55,7 +55,9 @@ export type DriftType =
   | 'type_changed'
   | 'nullability_changed'
   | 'required_changed'
-  | 'added';
+  | 'added'
+  | 'enum_changed'
+  | 'format_changed';
 
 export type Severity = 'breaking' | 'warning' | 'info';
 
@@ -65,4 +67,5 @@ export interface DriftResult {
   severity: Severity;
   expected?: string;
   actual?: string;
+  source?: 'response' | 'request_body';
 }

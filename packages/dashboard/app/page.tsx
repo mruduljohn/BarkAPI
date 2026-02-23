@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePolling } from "./hooks/use-polling";
+import { useSSE } from "./hooks/use-sse";
 import { Card, Badge, StatusDot } from "./components/ui";
 import { EmptyState } from "./components/empty-state";
 
@@ -27,7 +28,12 @@ interface CheckRun {
 }
 
 export default function ProjectsPage() {
-  const { data: projects, loading, lastUpdated } = usePolling<Project[]>("/api/projects");
+  // SSE for real-time updates, with polling fallback
+  const sse = useSSE<Project[]>("/api/sse", { event: "projects" });
+  const poll = usePolling<Project[]>("/api/projects", { enabled: !sse.data });
+  const projects = sse.data || poll.data;
+  const loading = sse.loading && poll.loading;
+  const lastUpdated = sse.lastUpdated || poll.lastUpdated;
 
   if (loading) {
     return (
@@ -68,12 +74,12 @@ function ProjectCard({ project }: { project: Project }) {
   const { data: endpoints } = usePolling<Endpoint[]>(
     `/api/projects/${project.id}/endpoints`
   );
-  const { data: runs } = usePolling<CheckRun[]>(
-    `/api/projects/${project.id}/check-runs`
+  const { data: runsResponse } = usePolling<{ data: CheckRun[] }>(
+    `/api/projects/${project.id}/check-runs?limit=1`
   );
 
   const eps = endpoints || [];
-  const lastRun = runs?.[0] || null;
+  const lastRun = runsResponse?.data?.[0] || null;
 
   const healthy = eps.filter((e) => e.status === "healthy").length;
   const drifted = eps.filter((e) => e.status === "drifted").length;

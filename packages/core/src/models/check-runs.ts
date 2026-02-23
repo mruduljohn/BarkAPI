@@ -13,11 +13,17 @@ export function getCheckRun(id: number): CheckRun | undefined {
   return db.prepare('SELECT * FROM check_runs WHERE id = ?').get(id) as CheckRun | undefined;
 }
 
-export function listCheckRuns(projectId: number, limit = 50): CheckRun[] {
+export function listCheckRuns(projectId: number, limit = 50, offset = 0): CheckRun[] {
   const db = getDb();
   return db.prepare(
-    'SELECT * FROM check_runs WHERE project_id = ? ORDER BY started_at DESC LIMIT ?'
-  ).all(projectId, limit) as CheckRun[];
+    'SELECT * FROM check_runs WHERE project_id = ? ORDER BY started_at DESC LIMIT ? OFFSET ?'
+  ).all(projectId, limit, offset) as CheckRun[];
+}
+
+export function countCheckRuns(projectId: number): number {
+  const db = getDb();
+  const row = db.prepare('SELECT COUNT(*) as count FROM check_runs WHERE project_id = ?').get(projectId) as { count: number };
+  return row.count;
 }
 
 export function finishCheckRun(

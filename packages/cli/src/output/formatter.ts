@@ -71,6 +71,10 @@ function getDriftDescription(drift: DriftResult): string {
       return `nullability: ${drift.expected} → ${drift.actual}`;
     case 'required_changed':
       return `required changed: ${drift.expected} → ${drift.actual}`;
+    case 'enum_changed':
+      return `enum changed: ${drift.actual}`;
+    case 'format_changed':
+      return `format changed: ${drift.expected} → ${drift.actual}`;
     default:
       return drift.drift_type;
   }

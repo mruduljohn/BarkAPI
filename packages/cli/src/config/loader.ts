@@ -13,6 +13,7 @@ export interface BarkApiConfig {
     query_param?: string;
   };
   dashboard_url?: string;
+  path_params?: Record<string, string>;
   endpoints?: {
     include?: string[];
     exclude?: string[];

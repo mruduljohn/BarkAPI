@@ -35,11 +35,17 @@ export function listDriftsByCheckRun(checkRunId: number): Drift[] {
   ).all(checkRunId) as Drift[];
 }
 
-export function listDriftsByEndpoint(endpointId: number, limit = 100): Drift[] {
+export function listDriftsByEndpoint(endpointId: number, limit = 100, offset = 0): Drift[] {
   const db = getDb();
   return db.prepare(
-    'SELECT * FROM drifts WHERE endpoint_id = ? ORDER BY detected_at DESC LIMIT ?'
-  ).all(endpointId, limit) as Drift[];
+    'SELECT * FROM drifts WHERE endpoint_id = ? ORDER BY detected_at DESC LIMIT ? OFFSET ?'
+  ).all(endpointId, limit, offset) as Drift[];
+}
+
+export function countDriftsByEndpoint(endpointId: number): number {
+  const db = getDb();
+  const row = db.prepare('SELECT COUNT(*) as count FROM drifts WHERE endpoint_id = ?').get(endpointId) as { count: number };
+  return row.count;
 }
 
 export function createDriftsBatch(

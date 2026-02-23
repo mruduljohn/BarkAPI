@@ -1,1 +1,0 @@
-{"version":3,"file":"schema-differ.d.ts","sourceRoot":"","sources":["../../src/diff/schema-differ.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,WAAW,EAAuB,MAAM,iBAAiB,CAAC;AAExE;;;GAGG;AACH,wBAAgB,WAAW,CACzB,QAAQ,EAAE,MAAM,CAAC,MAAM,EAAE,GAAG,CAAC,EAC7B,MAAM,EAAE,MAAM,CAAC,MAAM,EAAE,GAAG,CAAC,EAC3B,IAAI,SAAK,GACR,WAAW,EAAE,CAgGf"}
