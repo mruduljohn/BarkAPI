@@ -51,19 +51,31 @@ GET /api/orders
 
 ## Quick Start
 
+### Install from npm
+
+```bash
+npm install -g barkapi
+```
+
+### Or run from source
+
 ```bash
 # Install dependencies
 npm install
 
 # Build all packages
 npm run build
+```
 
+### Usage
+
+```bash
 # Navigate to your API project and initialize
 cd /path/to/your-api
-npx barkapi init --spec openapi.yaml --base-url http://localhost:3000
+barkapi init --spec openapi.yaml --base-url http://localhost:3000
 
 # Start dashboard + watch mode (opens browser automatically)
-npx barkapi dev
+barkapi dev
 ```
 
 That's it — two commands. The dashboard opens at `http://localhost:3100` and auto-refreshes every 3 seconds as new check results come in. No manual pushing required.
