@@ -47,5 +47,5 @@ export const initCommand = new Command('init')
     console.log(chalk.gray('  spec:    ') + chalk.white(config.spec));
     console.log(chalk.gray('  url:     ') + chalk.white(config.base_url));
     console.log('');
-    console.log(chalk.gray('Run ') + chalk.cyan('barkapi check') + chalk.gray(' to detect drift.'));
+    console.log(chalk.gray('Run ') + chalk.cyan('barkapi dev') + chalk.gray(' to start watching + dashboard.'));
   });

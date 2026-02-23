@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { LiveIndicator } from "./live-indicator";
 
 const navItems = [
   { href: "/", label: "Projects", icon: "📦" },
@@ -33,8 +34,9 @@ export function Sidebar() {
           </Link>
         ))}
       </nav>
-      <div className="p-4 border-t border-[var(--border-color)] text-xs text-[var(--muted)]">
-        v0.1.0
+      <div className="p-4 border-t border-[var(--border-color)] flex items-center justify-between">
+        <span className="text-xs text-[var(--muted)]">v0.1.0</span>
+        <LiveIndicator />
       </div>
     </aside>
   );

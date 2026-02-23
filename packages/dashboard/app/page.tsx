@@ -1,27 +1,58 @@
+"use client";
 import Link from "next/link";
-import { listProjects, listCheckRuns, listEndpoints } from "@barkapi/core";
-import { getDashboardDb } from "./lib/db";
+import { usePolling } from "./hooks/use-polling";
 import { Card, Badge, StatusDot } from "./components/ui";
+import { EmptyState } from "./components/empty-state";
 
-export const dynamic = "force-dynamic";
+interface Project {
+  id: number;
+  name: string;
+  base_url: string;
+  created_at: string;
+  updated_at: string;
+}
+
+interface Endpoint {
+  id: number;
+  project_id: number;
+  method: string;
+  path: string;
+  status: "healthy" | "drifted" | "error";
+  last_checked_at: string | null;
+}
+
+interface CheckRun {
+  id: number;
+  started_at: string;
+}
 
 export default function ProjectsPage() {
-  getDashboardDb();
-  const projects = listProjects();
+  const { data: projects, loading, lastUpdated } = usePolling<Project[]>("/api/projects");
+
+  if (loading) {
+    return (
+      <div>
+        <h1 className="text-2xl font-bold mb-6">Projects</h1>
+        <p className="text-[var(--muted)]">Loading...</p>
+      </div>
+    );
+  }
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-6">Projects</h1>
-      {projects.length === 0 ? (
-        <Card>
-          <p className="text-[var(--muted)] text-center py-8">
-            No projects yet. Run{" "}
-            <code className="bg-black px-2 py-1 rounded text-sm">
-              barkapi report --push
-            </code>{" "}
-            to send data here.
-          </p>
-        </Card>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold">Projects</h1>
+        {lastUpdated && (
+          <span className="text-xs text-[var(--muted)]">
+            Updated {lastUpdated.toLocaleTimeString()}
+          </span>
+        )}
+      </div>
+      {!projects || projects.length === 0 ? (
+        <EmptyState
+          message="No projects yet."
+          command="barkapi dev"
+        />
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {projects.map((project) => (
@@ -33,14 +64,20 @@ export default function ProjectsPage() {
   );
 }
 
-function ProjectCard({ project }: { project: any }) {
-  const endpoints = listEndpoints(project.id);
-  const runs = listCheckRuns(project.id, 1);
-  const lastRun = runs[0];
+function ProjectCard({ project }: { project: Project }) {
+  const { data: endpoints } = usePolling<Endpoint[]>(
+    `/api/projects/${project.id}/endpoints`
+  );
+  const { data: runs } = usePolling<CheckRun[]>(
+    `/api/projects/${project.id}/check-runs`
+  );
 
-  const healthy = endpoints.filter((e: any) => e.status === "healthy").length;
-  const drifted = endpoints.filter((e: any) => e.status === "drifted").length;
-  const errored = endpoints.filter((e: any) => e.status === "error").length;
+  const eps = endpoints || [];
+  const lastRun = runs?.[0] || null;
+
+  const healthy = eps.filter((e) => e.status === "healthy").length;
+  const drifted = eps.filter((e) => e.status === "drifted").length;
+  const errored = eps.filter((e) => e.status === "error").length;
 
   return (
     <Link href={`/projects/${project.id}`}>
@@ -49,7 +86,7 @@ function ProjectCard({ project }: { project: any }) {
           <h2 className="font-semibold text-lg">{project.name}</h2>
           {drifted > 0 || errored > 0 ? (
             <Badge color="red">Drift detected</Badge>
-          ) : endpoints.length > 0 ? (
+          ) : eps.length > 0 ? (
             <Badge color="green">Healthy</Badge>
           ) : (
             <Badge color="gray">No data</Badge>

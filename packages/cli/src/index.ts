@@ -4,6 +4,7 @@ import { initCommand } from './commands/init';
 import { checkCommand } from './commands/check';
 import { watchCommand } from './commands/watch';
 import { reportCommand } from './commands/report';
+import { devCommand } from './commands/dev';
 
 const program = new Command();
 
@@ -16,5 +17,6 @@ program.addCommand(initCommand);
 program.addCommand(checkCommand);
 program.addCommand(watchCommand);
 program.addCommand(reportCommand);
+program.addCommand(devCommand);
 
 program.parse();

@@ -40,6 +40,8 @@ GET /api/orders
 - **Severity classification** — `breaking` / `warning` / `info` so you know what matters
 - **CI-friendly** — exits with code 1 on breaking drift, plug it into any pipeline
 - **Continuous watch mode** — monitor endpoints on an interval
+- **`barkapi dev`** — one command starts watch mode + dashboard, auto-opens browser
+- **Realtime dashboard** — auto-refreshes every 3s via shared SQLite database, no manual pushing
 - **Web dashboard** — endpoint health map, drift history timeline, side-by-side JSON diffs
 - **Alerting** — configure Slack webhook and email notifications
 - **Embedded SQLite** — no external database to set up or maintain
@@ -60,12 +62,11 @@ npm run build
 cd /path/to/your-api
 npx barkapi init --spec openapi.yaml --base-url http://localhost:3000
 
-# Run a drift check
-npx barkapi check
-
-# Push results to the dashboard
-npx barkapi report --push
+# Start dashboard + watch mode (opens browser automatically)
+npx barkapi dev
 ```
+
+That's it — two commands. The dashboard opens at `http://localhost:3100` and auto-refreshes every 3 seconds as new check results come in. No manual pushing required.
 
 ---
 
@@ -85,6 +86,20 @@ Options:
 ```
 
 Auto-detects spec files at common paths: `openapi.yaml`, `swagger.json`, `docs/openapi.yml`, etc.
+
+### `barkapi dev`
+
+The all-in-one development command. Starts the web dashboard and watch mode together, sharing the same SQLite database. Auto-opens your browser after 3 seconds.
+
+```bash
+barkapi dev [options]
+
+Options:
+  --config <path>        Path to .barkapi.yml
+  --interval <seconds>   Check interval (default: 30)
+  --port <port>          Dashboard port (default: 3100)
+  --no-open              Don't auto-open browser
+```
 
 ### `barkapi check`
 
@@ -115,14 +130,14 @@ Options:
 
 ### `barkapi report`
 
-Runs a check and optionally pushes results to the web dashboard.
+Runs a check and prints results. The `--push` flag is **deprecated** — the dashboard now reads directly from the shared database, so pushing is no longer needed. Use `barkapi dev` instead.
 
 ```bash
 barkapi report [options]
 
 Options:
   --config <path>   Path to .barkapi.yml
-  --push            Push results to dashboard
+  --push            (deprecated) Push results to dashboard
 ```
 
 ---
@@ -141,8 +156,8 @@ auth:
   type: bearer              # bearer | header | query
   token_env: API_TOKEN      # reads from environment variable
 
-# Optional: dashboard URL for report --push
-dashboard_url: http://localhost:3100
+# Optional: dashboard URL (deprecated, used by report --push)
+# dashboard_url: http://localhost:3100
 
 # Optional: filter which endpoints to check
 endpoints:
@@ -181,7 +196,9 @@ The diff engine performs recursive structural comparison between your OpenAPI sp
 
 ## Dashboard
 
-The web dashboard runs on **port 3100** and provides a visual interface for monitoring drift across all your projects.
+The web dashboard runs on **port 3100** and provides a realtime visual interface for monitoring drift across all your projects.
+
+The easiest way to use the dashboard is via `barkapi dev`, which starts it automatically. You can also run it standalone:
 
 ```bash
 # Development
@@ -192,17 +209,29 @@ npm run build:dashboard
 npm run start -w packages/dashboard
 ```
 
+### Realtime Updates
+
+The dashboard polls the API every 3 seconds and updates automatically. A pulsing green "Live" indicator in the sidebar shows that realtime monitoring is active. No manual refresh or `report --push` needed — the CLI and dashboard share the same SQLite database (WAL mode supports concurrent reads and writes).
+
+You can point the dashboard at any project's database using environment variables:
+
+```bash
+# Point at a specific DB file
+BARKAPI_DB_PATH=/path/to/.barkapi/barkapi.db npm run dev:dashboard
+
+# Or point at the project directory
+BARKAPI_PROJECT_DIR=/path/to/your-api npm run dev:dashboard
+```
+
 ### Pages
 
 | Page | Route | Description |
 |------|-------|-------------|
 | **Projects** | `/` | Overview cards with health summary per project |
-| **Health Map** | `/projects/:id` | Grid of endpoints, color-coded green/yellow/red |
+| **Health Map** | `/projects/:id` | Grid of endpoints, color-coded green/yellow/red, plus summary stats |
 | **Endpoint Detail** | `/projects/:id/endpoints/:eid` | Drift list with side-by-side expected vs actual |
 | **Timeline** | `/projects/:id/timeline` | Area chart of drift over time + check run history |
 | **Alerts** | `/projects/:id/alerts` | Configure Slack and email notifications |
-
-The dashboard receives data from the CLI via `barkapi report --push`, which hits the `POST /api/check-runs` endpoint.
 
 ---
 
@@ -219,14 +248,15 @@ BarkAPI/
 │   │       └── models/         CRUD for projects, endpoints, check runs, drifts, alerts
 │   ├── cli/                    @barkapi/cli
 │   │   └── src/
-│   │       ├── commands/       init, check, watch, report
+│   │       ├── commands/       init, check, watch, report, dev
 │   │       ├── config/         .barkapi.yml loader + project detector
 │   │       ├── runner/         HTTP endpoint caller + check orchestrator
 │   │       └── output/         ESLint-style chalk formatter
 │   └── dashboard/              @barkapi/dashboard
 │       └── app/
 │           ├── api/            REST API routes
-│           ├── components/     Sidebar, Card, Badge, Button, Table, CodeBlock
+│           ├── components/     Sidebar, LiveIndicator, EmptyState, UI primitives
+│           ├── hooks/          usePolling (realtime data fetching)
 │           ├── lib/            DB connection utilities
 │           └── projects/       Project pages (health map, detail, timeline, alerts)
 ```

@@ -31,6 +31,8 @@ export const reportCommand = new Command('report')
       console.log(formatCheckResult(result));
 
       if (opts.push) {
+        console.log(chalk.yellow('\n  ⚠ --push is deprecated. The dashboard now reads from the shared database automatically.'));
+        console.log(chalk.yellow('    Just run `barkapi dev` for the full experience.\n'));
         const dashboardUrl = config.dashboard_url || 'http://localhost:3100';
         const pushSpinner = ora(`Pushing results to ${dashboardUrl}...`).start();
 

@@ -44,6 +44,6 @@ exports.initCommand = new commander_1.Command('init')
     console.log(chalk_1.default.gray('  spec:    ') + chalk_1.default.white(config.spec));
     console.log(chalk_1.default.gray('  url:     ') + chalk_1.default.white(config.base_url));
     console.log('');
-    console.log(chalk_1.default.gray('Run ') + chalk_1.default.cyan('barkapi check') + chalk_1.default.gray(' to detect drift.'));
+    console.log(chalk_1.default.gray('Run ') + chalk_1.default.cyan('barkapi dev') + chalk_1.default.gray(' to start watching + dashboard.'));
 });
 //# sourceMappingURL=init.js.map

@@ -1,0 +1,223 @@
+openapi: "3.0.3"
+info:
+  title: BarkAPI Example Store
+  description: A sample API with intentional drift for testing BarkAPI
+  version: "1.0.0"
+
+servers:
+  - url: http://localhost:4000
+
+paths:
+  /api/health:
+    get:
+      summary: Health check
+      operationId: getHealth
+      responses:
+        "200":
+          description: Service health
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, uptime, version]
+                properties:
+                  status:
+                    type: string
+                  uptime:
+                    type: number
+                  version:
+                    type: string
+
+  /api/users:
+    get:
+      summary: List all users
+      operationId: listUsers
+      responses:
+        "200":
+          description: List of users
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, total]
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/User"
+                  total:
+                    type: integer
+
+  /api/users/{id}:
+    get:
+      summary: Get user by ID
+      operationId: getUser
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Single user
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: "#/components/schemas/User"
+
+  /api/orders:
+    get:
+      summary: List all orders
+      operationId: listOrders
+      responses:
+        "200":
+          description: List of orders
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, total]
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Order"
+                  total:
+                    type: integer
+
+  /api/orders/{id}:
+    get:
+      summary: Get order by ID
+      operationId: getOrder
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Single order
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: "#/components/schemas/Order"
+
+  /api/products:
+    get:
+      summary: List all products
+      operationId: listProducts
+      responses:
+        "200":
+          description: List of products
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, total]
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Product"
+                  total:
+                    type: integer
+
+  /api/products/{id}:
+    get:
+      summary: Get product by ID
+      operationId: getProduct
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Single product
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: "#/components/schemas/Product"
+
+components:
+  schemas:
+    User:
+      type: object
+      required: [id, name, email, role, created_at]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string          # DRIFT: server returns number
+        role:
+          type: string
+        created_at:
+          type: string          # DRIFT: server omits this required field
+          format: date-time
+        # NOTE: server also returns "avatar" which is NOT in this spec
+
+    Order:
+      type: object
+      required: [id, user_id, status, total, currency, items, created_at]
+      properties:
+        id:
+          type: integer
+        user_id:
+          type: integer
+        status:
+          type: string
+          enum: [pending, shipped, delivered, cancelled]
+        total:
+          type: number
+        currency:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/OrderItem"
+        created_at:
+          type: string
+          format: date-time
+
+    OrderItem:
+      type: object
+      required: [product, quantity, price]
+      properties:
+        product:
+          type: string
+        quantity:
+          type: integer
+        price:
+          type: number
+
+    Product:
+      type: object
+      required: [id, name, price, in_stock, category]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        price:
+          type: number          # DRIFT: server returns string
+        in_stock:
+          type: boolean
+        category:
+          type: string

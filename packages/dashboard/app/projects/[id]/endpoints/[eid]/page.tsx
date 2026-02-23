@@ -1,47 +1,80 @@
+"use client";
 import Link from "next/link";
-import {
-  getProject,
-  getEndpoint,
-  listDriftsByEndpoint,
-} from "@barkapi/core";
-import { getDashboardDb } from "../../../../lib/db";
+import { useParams } from "next/navigation";
+import { usePolling } from "../../../../hooks/use-polling";
 import { Card, Badge, CodeBlock, StatusDot } from "../../../../components/ui";
 
-export const dynamic = "force-dynamic";
+interface Project {
+  id: number;
+  name: string;
+}
 
-export default function EndpointDetail({
-  params,
-}: {
-  params: { id: string; eid: string };
-}) {
-  getDashboardDb();
-  const project = getProject(parseInt(params.id));
-  const endpoint = getEndpoint(parseInt(params.eid));
+interface Endpoint {
+  id: number;
+  method: string;
+  path: string;
+  status: "healthy" | "drifted" | "error";
+}
+
+interface Drift {
+  id: number;
+  field_path: string;
+  drift_type: string;
+  severity: "breaking" | "warning" | "info";
+  expected: string | null;
+  actual: string | null;
+  detected_at: string;
+}
+
+const severityColors: Record<string, "red" | "yellow" | "blue"> = {
+  breaking: "red",
+  warning: "yellow",
+  info: "blue",
+};
+
+const severityIcons: Record<string, string> = {
+  breaking: "\u2717",
+  warning: "\u26A0",
+  info: "\u2139",
+};
+
+export default function EndpointDetail() {
+  const params = useParams();
+  const projectId = params.id as string;
+  const endpointId = params.eid as string;
+
+  const { data: project } = usePolling<Project>(
+    `/api/projects/${projectId}`
+  );
+  const { data: endpoint, loading } = usePolling<Endpoint>(
+    `/api/projects/${projectId}/endpoints/${endpointId}`
+  );
+  const { data: drifts, lastUpdated } = usePolling<Drift[]>(
+    `/api/projects/${projectId}/endpoints/${endpointId}/drifts`
+  );
+
+  if (loading) {
+    return <p className="text-[var(--muted)]">Loading...</p>;
+  }
+
   if (!project || !endpoint) return <div>Not found</div>;
 
-  const drifts = listDriftsByEndpoint(endpoint.id);
-
-  const severityColors: Record<string, "red" | "yellow" | "blue"> = {
-    breaking: "red",
-    warning: "yellow",
-    info: "blue",
-  };
-
-  const severityIcons: Record<string, string> = {
-    breaking: "✗",
-    warning: "⚠",
-    info: "ℹ",
-  };
+  const driftList = drifts || [];
 
   return (
     <div>
-      <div className="mb-4">
+      <div className="flex items-center justify-between mb-4">
         <Link
-          href={`/projects/${params.id}`}
+          href={`/projects/${projectId}`}
           className="text-sm text-[var(--muted)] hover:text-[var(--foreground)]"
         >
-          ← {project.name}
+          &larr; {project.name}
         </Link>
+        {lastUpdated && (
+          <span className="text-xs text-[var(--muted)]">
+            Updated {lastUpdated.toLocaleTimeString()}
+          </span>
+        )}
       </div>
 
       <div className="flex items-center gap-3 mb-6">
@@ -63,7 +96,7 @@ export default function EndpointDetail({
         </Badge>
       </div>
 
-      {drifts.length === 0 ? (
+      {driftList.length === 0 ? (
         <Card>
           <p className="text-[var(--muted)] text-center py-8">
             No drift detected for this endpoint.
@@ -72,9 +105,9 @@ export default function EndpointDetail({
       ) : (
         <div className="space-y-3">
           <h2 className="text-lg font-semibold">
-            Drifts ({drifts.length})
+            Drifts ({driftList.length})
           </h2>
-          {drifts.map((drift: any) => (
+          {driftList.map((drift) => (
             <Card key={drift.id}>
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-2">
@@ -98,13 +131,13 @@ export default function EndpointDetail({
                     <p className="text-xs text-[var(--muted)] mb-1">
                       Expected (spec)
                     </p>
-                    <CodeBlock>{drift.expected || "—"}</CodeBlock>
+                    <CodeBlock>{drift.expected || "\u2014"}</CodeBlock>
                   </div>
                   <div>
                     <p className="text-xs text-[var(--muted)] mb-1">
                       Actual (response)
                     </p>
-                    <CodeBlock>{drift.actual || "—"}</CodeBlock>
+                    <CodeBlock>{drift.actual || "\u2014"}</CodeBlock>
                   </div>
                 </div>
               )}

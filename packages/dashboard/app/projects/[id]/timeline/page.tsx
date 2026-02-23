@@ -1,6 +1,6 @@
 "use client";
-import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import { usePolling } from "../../../hooks/use-polling";
 import { Card, Badge } from "../../../components/ui";
 import { ProjectNav } from "../nav";
 import { TimelineChart } from "./chart";
@@ -17,19 +17,22 @@ interface CheckRun {
 
 export default function TimelinePage() {
   const params = useParams();
-  const [runs, setRuns] = useState<CheckRun[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: runs, loading, lastUpdated } = usePolling<CheckRun[]>(
+    `/api/projects/${params.id}/check-runs`
+  );
 
-  useEffect(() => {
-    fetch(`/api/projects/${params.id}/check-runs`)
-      .then((r) => r.json())
-      .then(setRuns)
-      .finally(() => setLoading(false));
-  }, [params.id]);
+  const checkRuns = runs || [];
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-2">Timeline</h1>
+      <div className="flex items-center justify-between mb-2">
+        <h1 className="text-2xl font-bold">Timeline</h1>
+        {lastUpdated && (
+          <span className="text-xs text-[var(--muted)]">
+            Updated {lastUpdated.toLocaleTimeString()}
+          </span>
+        )}
+      </div>
       <p className="text-[var(--muted)] text-sm mb-4">
         Check run history and drift over time
       </p>
@@ -38,7 +41,7 @@ export default function TimelinePage() {
       <div className="mt-6">
         {loading ? (
           <p className="text-[var(--muted)]">Loading...</p>
-        ) : runs.length === 0 ? (
+        ) : checkRuns.length === 0 ? (
           <Card>
             <p className="text-[var(--muted)] text-center py-8">
               No check runs yet.
@@ -48,14 +51,14 @@ export default function TimelinePage() {
           <>
             <Card className="mb-6">
               <h3 className="text-sm font-semibold mb-4">Drift Over Time</h3>
-              <TimelineChart runs={runs} />
+              <TimelineChart runs={checkRuns} />
             </Card>
 
             <h3 className="text-lg font-semibold mb-3">
-              Check Runs ({runs.length})
+              Check Runs ({checkRuns.length})
             </h3>
             <div className="space-y-2">
-              {runs.map((run) => (
+              {checkRuns.map((run) => (
                 <Card key={run.id} className="flex items-center justify-between">
                   <div>
                     <span className="text-sm font-mono">

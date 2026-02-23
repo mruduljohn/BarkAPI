@@ -6,6 +6,7 @@ const init_1 = require("./commands/init");
 const check_1 = require("./commands/check");
 const watch_1 = require("./commands/watch");
 const report_1 = require("./commands/report");
+const dev_1 = require("./commands/dev");
 const program = new commander_1.Command();
 program
     .name('barkapi')
@@ -15,5 +16,6 @@ program.addCommand(init_1.initCommand);
 program.addCommand(check_1.checkCommand);
 program.addCommand(watch_1.watchCommand);
 program.addCommand(report_1.reportCommand);
+program.addCommand(dev_1.devCommand);
 program.parse();
 //# sourceMappingURL=index.js.map
