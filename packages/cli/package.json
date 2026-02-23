@@ -1,6 +1,6 @@
 {
   "name": "barkapi",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "API Contract Drift Detector — Your API's watchdog",
   "keywords": [
     "api",
