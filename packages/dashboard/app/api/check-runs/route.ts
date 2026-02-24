@@ -7,7 +7,7 @@ import {
   finishCheckRun,
   createDriftsBatch,
   updateEndpointStatus,
-} from "@barkapi/core";
+} from "barkapi-core";
 import { getDashboardDb } from "../../lib/db";
 
 /**

@@ -216,7 +216,7 @@ barkapi ci-gen --base-url-var vars.STAGING_URL
 ```text
 BarkAPI/
 ├── packages/
-│   ├── core/                   @barkapi/core — shared engine
+│   ├── core/                   barkapi-core — shared engine
 │   │   └── src/
 │   │       ├── parser/         OpenAPI parser + response schema inferrer
 │   │       ├── diff/           Recursive schema differ + severity classifier
@@ -227,7 +227,7 @@ BarkAPI/
 │   │       ├── commands/       init, check, watch, dev, diff, ci-gen
 │   │       ├── config/         .barkapi.yml loader + project detector
 │   │       └── runner/         HTTP endpoint caller + check orchestrator
-│   └── dashboard/              @barkapi/dashboard — Next.js web UI
+│   └── dashboard/              barkapi-dashboard — Next.js web UI
 │       └── app/
 │           ├── api/            REST API routes (SSE, stats, schema)
 │           └── projects/       Project pages (health map, detail, timeline)

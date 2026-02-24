@@ -1,4 +1,4 @@
-import { getDb } from "@barkapi/core";
+import { getDb } from "barkapi-core";
 import path from "path";
 
 export function getDashboardDb() {

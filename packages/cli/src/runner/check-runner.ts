@@ -11,8 +11,8 @@ import {
   createDriftsBatch,
   updateEndpointStatus,
   sendNotifications,
-} from '@barkapi/core';
-import type { DriftResult, ParsedEndpoint } from '@barkapi/core';
+} from 'barkapi-core';
+import type { DriftResult, ParsedEndpoint } from 'barkapi-core';
 import type { BarkApiConfig } from '../config';
 import { callEndpoint } from './endpoint-caller';
 import path from 'path';

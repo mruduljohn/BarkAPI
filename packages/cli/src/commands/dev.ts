@@ -29,7 +29,7 @@ export const devCommand = new Command('dev')
     // Find the dashboard package directory
     const dashboardDir = findDashboardDir();
     if (!dashboardDir) {
-      console.error(chalk.red('Could not find @barkapi/dashboard package. Make sure it is installed.'));
+      console.error(chalk.red('Could not find barkapi-dashboard package. Make sure it is installed.'));
       process.exit(1);
     }
 
@@ -121,7 +121,7 @@ function findDashboardDir(): string | null {
     try {
       const pkgPath = path.join(dir, 'package.json');
       const pkg = require(pkgPath);
-      if (pkg.name === '@barkapi/dashboard') {
+      if (pkg.name === 'barkapi-dashboard') {
         return dir;
       }
     } catch {

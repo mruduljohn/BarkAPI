@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import path from "path";
 import fs from "fs";
-import { getProject, getEndpoint, listDriftsByEndpoint, parseOpenAPISpec } from "@barkapi/core";
+import { getProject, getEndpoint, listDriftsByEndpoint, parseOpenAPISpec } from "barkapi-core";
 import { getDashboardDb } from "../../../../../../lib/db";
 
 const emptyResponse = {

@@ -7,7 +7,7 @@ import {
   countDriftsByTypeForProject,
   countDriftsBySeverityForProject,
   countTotalDriftsForProject,
-} from "@barkapi/core";
+} from "barkapi-core";
 import { getDashboardDb } from "../../../../lib/db";
 
 export async function GET(

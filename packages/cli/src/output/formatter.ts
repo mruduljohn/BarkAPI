@@ -1,6 +1,6 @@
 import chalk from 'chalk';
 import type { CheckResult, EndpointCheckResult } from '../runner';
-import type { DriftResult } from '@barkapi/core';
+import type { DriftResult } from 'barkapi-core';
 
 export function formatCheckResult(result: CheckResult): string {
   const lines: string[] = [];

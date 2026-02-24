@@ -4,7 +4,7 @@ import {
   createAlertConfig,
   updateAlertConfig,
   deleteAlertConfig,
-} from "@barkapi/core";
+} from "barkapi-core";
 import { getDashboardDb } from "../../../../lib/db";
 
 export async function GET(

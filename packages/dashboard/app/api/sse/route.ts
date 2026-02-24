@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { listProjects, listEndpoints, listCheckRuns } from "@barkapi/core";
+import { listProjects, listEndpoints, listCheckRuns } from "barkapi-core";
 import { getDashboardDb } from "../../lib/db";
 
 /**

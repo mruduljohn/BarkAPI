@@ -1,7 +1,7 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
-import { parseOpenAPISpec, diffSchemas } from '@barkapi/core';
-import type { DriftResult } from '@barkapi/core';
+import { parseOpenAPISpec, diffSchemas } from 'barkapi-core';
+import type { DriftResult } from 'barkapi-core';
 import path from 'path';
 
 export const diffCommand = new Command('diff')

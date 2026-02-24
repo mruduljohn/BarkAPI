@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { listDriftsByEndpoint, countDriftsByEndpoint } from "@barkapi/core";
+import { listDriftsByEndpoint, countDriftsByEndpoint } from "barkapi-core";
 import { getDashboardDb } from "../../../../../../lib/db";
 
 export async function GET(

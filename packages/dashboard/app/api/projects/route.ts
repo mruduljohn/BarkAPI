@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { listProjects, createProject } from "@barkapi/core";
+import { listProjects, createProject } from "barkapi-core";
 import { getDashboardDb } from "../../lib/db";
 
 export async function GET() {
