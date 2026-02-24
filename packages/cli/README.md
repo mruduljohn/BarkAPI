@@ -1,24 +1,20 @@
-<p align="center">
-  <img src="https://em-content.zobj.net/source/apple/391/dog-face_1f436.png" width="80" />
-</p>
-
-<h1 align="center">BarkAPI</h1>
-
-<p align="center">
-  <strong>Your API's watchdog.</strong><br/>
-  Detects schema drift between your OpenAPI spec and live API responses — before things break in production.
-</p>
-
-<p align="center">
-  <a href="https://www.npmjs.com/package/barkapi"><img src="https://img.shields.io/npm/v/barkapi" alt="npm version" /></a>
-  <img src="https://img.shields.io/badge/node-%3E%3D18-brightgreen" alt="Node.js >= 18" />
-  <img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT License" />
-  <img src="https://img.shields.io/badge/typescript-strict-blue" alt="TypeScript" />
-</p>
+<div align="center">
+  <img src="https://em-content.zobj.net/source/apple/391/dog-face_1f436.png" height="120" alt="BarkAPI Logo" />
+  <h1>BarkAPI</h1>
+  <p><strong>Your API's Watchdog.</strong></p>
+  <p><em>Detect schema drift between your OpenAPI spec and live responses before production breaks.</em></p>
+  
+  <p>
+    <a href="https://www.npmjs.com/package/barkapi"><img src="https://img.shields.io/npm/v/barkapi?style=for-the-badge&color=2563EB" alt="npm version" /></a>
+    <img src="https://img.shields.io/badge/node-%3E%3D18-brightgreen?style=for-the-badge&color=10B981" alt="Node.js >= 18" />
+    <img src="https://img.shields.io/badge/license-MIT-blue?style=for-the-badge&color=8B5CF6" alt="MIT License" />
+    <img src="https://img.shields.io/badge/typescript-strict-blue?style=for-the-badge&color=3B82F6" alt="TypeScript" />
+  </p>
+</div>
 
 ---
 
-**BarkAPI** parses your OpenAPI spec, hits your live endpoints, compares response shapes, and reports mismatches — like **ESLint for your API contracts**. Ships with a CLI for your terminal and CI pipelines, plus a real-time web dashboard with schema visualization and drift annotations.
+> **BarkAPI** parses your OpenAPI spec, hits your live endpoints, compares response shapes, and reports mismatches. It acts like **ESLint for your API contracts**. Ships with a CLI for your terminal and CI pipelines, plus a real-time web dashboard with schema visualizations.
 
 ```
 GET /api/users/:id
@@ -31,156 +27,93 @@ GET /api/orders
 ✗ 2 breaking  ⚠ 1 warning  ✓ 8 passing  (12 endpoints checked)
 ```
 
----
+## ✨ Highlights & Features
 
-## Features
+- 🛠 **Zero-config setup** — Auto-detects your OpenAPI spec and project framework.
+- 🔍 **Recursive schema diffing** — Catches type changes, missing fields, nullability shifts, and undocumented fields.
+- 🚥 **Severity grading** — Categorized into `breaking`, `warning`, and `info` so you prioritize what matters.
+- 🚀 **CI-friendly** — Exits with code `1` on breaking drift. Plug it directly into your pipelines.
+- ⏱ **Watch mode** — Monitor endpoints continuously on an interval.
+- 🖥 **Bento Dashboard** — One command (`barkapi dev`) starts watch mode + an amazing real-time dashboard.
+- 📈 **Visualizations** — Interactive schema trees, endpoint health grids, timelines, and diff history.
+- 🔔 **Alerting** — Configure Slack webhooks and email notifications on new schema drifts.
+- 🗄 **Embedded SQLite** — No external DBs needed. Data stays local, fast, and secure.
 
-- **Zero-config setup** — auto-detects your OpenAPI spec and project type
-- **Recursive schema diffing** — catches type changes, missing fields, nullability shifts, and undocumented additions
-- **Severity classification** — `breaking` / `warning` / `info` so you know what matters
-- **CI-friendly** — exits with code 1 on breaking drift, plug it into any pipeline
-- **Continuous watch mode** — monitor endpoints on an interval
-- **`barkapi dev`** — one command starts watch mode + dashboard, auto-opens browser
-- **Real-time dashboard** — bento grid layout, animated health rings, schema viewer with drift annotations
-- **Schema visualization** — interactive tree rendering of your OpenAPI spec with inline drift markers
-- **Alerting** — configure Slack webhook and email notifications
-- **Spec diffing** — compare two versions of an OpenAPI spec offline
-- **CI generation** — auto-generate GitHub Actions workflows
-- **Embedded SQLite** — no external database to set up or maintain
+<br/>
 
----
+## 📖 Real-World Use Cases
 
-## Install
+### 🛠 1. Local Development (The "Dev Server")
+> *For developers actively writing or consuming the API who need real-time feedback.*
+- **Action**: Run `barkapi dev` while building your app alongside your backend web server.
+- **Outcome**: A beautiful dashboard opens at `localhost:3100`. As you iteratively code, if you accidentally rename `email` to `emailAddress` in your JSON payload without updating the spec, the dashboard instantly flashes red for a `breaking` drift. You catch the contract breach before even committing code.
+
+### 🛑 2. Continuous Integration (The "Pipeline Gatekeeper")
+> *For engineering leaders wanting to prevent breaking API changes from reaching production.*
+- **Action**: Use `barkapi ci-gen` to drop a GitHub Actions workflow into your repo that runs `barkapi check` against a staging deployment environment.
+- **Outcome**: When a developer opens a Pull Request that introduces a database change, altering an API response scalar from `string` to `number`, BarkAPI throws a fatal error in CI and **exits with code 1**. The PR fails automatically, preventing mobile clients from crashing in the wild.
+
+### 🚨 3. Background Monitoring & Alerts (The "Production Watchdog")
+> *For SREs and teams watching third-party APIs or checking critical production/staging environments for unauthorized drift.*
+- **Action**: Run `barkapi watch --interval 300` (every 5 mins) with Slack/email webhooks configured in `.barkapi.yml`.
+- **Outcome**: A rogue raw-SQL migration quietly exposes a sensitive internal `password_hash` column to the `GET /users` endpoint. BarkAPI immediately catches the undocumented field addition, classifies it, and fires an alert to your `#engineering-alerts` Slack channel to contain the spillage.
+
+### 🗂 4. Offline Schema Audits (The "Spec Compare")
+> *For frontend engineers trying to understand exactly what changed in a massive updated `v2` OpenAPI spec delivery.*
+- **Action**: Run `barkapi diff v1-openapi.yaml v2-openapi.yaml`.
+- **Outcome**: Instead of scanning thousands of lines of raw YAML diffs, barkapi diff outputs exactly which fields were *added*, became *nullable*, or were *dropped*, letting you know where to update your TypeScript types.
+
+<br/>
+
+## 📦 Installation
 
 ```bash
 npm install -g barkapi
 ```
 
 ### Prerequisites
-
 - **Node.js >= 18**
-- **Build tools** for native addon compilation (`better-sqlite3`):
+- **Build tools** for SQLite (`better-sqlite3`):
   - macOS: `xcode-select --install`
   - Ubuntu/Debian: `sudo apt install build-essential python3`
-  - Windows: install the "Desktop development with C++" workload from Visual Studio Build Tools
+  - Windows: Visual Studio Build Tools (C++ Workload)
 
----
+<br/>
 
-## Quick Start
+## 🚀 Quick Start
+
+Launch the watchdog in just two commands:
 
 ```bash
 # 1. Navigate to your API project
 cd /path/to/your-api
 
-# 2. Initialize — auto-detects your OpenAPI spec
+# 2. Initialize (auto-detects spec + setups config)
 barkapi init --spec openapi.yaml --base-url http://localhost:3000
 
-# 3. Start dashboard + watch mode (opens browser automatically)
+# 3. Start dashboard + watch mode
 barkapi dev
 ```
+*The dashboard opens at `http://localhost:3100` and auto-refreshes every 3 seconds.*
 
-That's it — two commands. The dashboard opens at `http://localhost:3100` and auto-refreshes every 3 seconds.
+<br/>
 
----
+## ⌨️ CLI Commands
 
-## Commands
+| Command | Description | Example / Options |
+|---------|-------------|-------------------|
+| `barkapi init` | Scans project, finds spec, generates `.barkapi.yml` | `--spec <path> --base-url <url>` |
+| `barkapi dev` | 🔥 Starts interactive web dashboard + watch checks | `--interval <sec> --port <port>` |
+| `barkapi check` | One-shot run. Prints ESLint-style report. Fails on breaking. | `--config <path>` |
+| `barkapi watch` | Runs continuous checks based on intervals | `--interval <sec>` |
+| `barkapi diff` | Compares two offline OpenAPI specs for diffs | `<old-spec> <new-spec> --json` |
+| `barkapi ci-gen` | Generates GitHub Actions workflow CI files | `--base-url-var <var>` |
 
-### `barkapi init`
+<br/>
 
-Scans your project for OpenAPI specs, detects project metadata, and generates a `.barkapi.yml` config file.
+## ⚙️ Configuration (`.barkapi.yml`)
 
-```bash
-barkapi init [options]
-
-Options:
-  --spec <path>       Path to OpenAPI spec file
-  --base-url <url>    Base URL for your API (default: http://localhost:3000)
-  --name <name>       Project name (default: from package.json)
-```
-
-Auto-detects spec files at common paths: `openapi.yaml`, `swagger.json`, `docs/openapi.yml`, etc.
-
-### `barkapi check`
-
-Parses your spec, calls each endpoint, diffs the response against the expected schema, and prints an ESLint-style report.
-
-```bash
-barkapi check [options]
-
-Options:
-  --config <path>     Path to .barkapi.yml
-  --spec <path>       Override spec path
-  --base-url <url>    Override base URL
-```
-
-**Exit code 1** if any breaking drift is detected — perfect for CI gates.
-
-### `barkapi dev`
-
-The all-in-one development command. Starts the web dashboard and watch mode together. Auto-opens your browser.
-
-```bash
-barkapi dev [options]
-
-Options:
-  --config <path>        Path to .barkapi.yml
-  --interval <seconds>   Check interval (default: 30)
-  --port <port>          Dashboard port (default: 3100)
-  --no-open              Don't auto-open browser
-```
-
-### `barkapi watch`
-
-Runs checks continuously on an interval.
-
-```bash
-barkapi watch [options]
-
-Options:
-  --config <path>        Path to .barkapi.yml
-  --interval <seconds>   Check interval (default: 30)
-```
-
-### `barkapi diff`
-
-Compares two OpenAPI spec versions and shows schema differences between them.
-
-```bash
-barkapi diff <old-spec> <new-spec> [options]
-
-Options:
-  --json    Output as JSON
-```
-
-### `barkapi ci-gen`
-
-Generates a GitHub Actions workflow file for automated contract checking.
-
-```bash
-barkapi ci-gen [options]
-
-Options:
-  --config <path>              Path to .barkapi.yml
-  --base-url-var <var>         GitHub Actions variable name (default: vars.STAGING_URL)
-  --output <path>              Output path (default: .github/workflows/barkapi.yml)
-```
-
-### `barkapi report`
-
-Runs a check and prints results.
-
-```bash
-barkapi report [options]
-
-Options:
-  --config <path>   Path to .barkapi.yml
-```
-
----
-
-## Configuration
-
-BarkAPI uses a `.barkapi.yml` file in your project root:
+BarkAPI uses a simple YAML config file in your project root. 
 
 ```yaml
 project: my-api
@@ -192,61 +125,40 @@ auth:
   type: bearer              # bearer | header | query
   token_env: API_TOKEN      # reads from environment variable
 
-# Optional: path parameters for parameterized endpoints
+# Optional: Path parameters for simulated requests
 path_params:
   id: "1"
 
-# Optional: filter which endpoints to check
+# Optional: Endpoint Filtering
 endpoints:
   include:
     - /api/users
-    - /api/orders
   exclude:
     - /api/internal
 ```
 
-### Auth Types
+<br/>
 
-| Type | Description | Config |
-|------|------------|--------|
-| `bearer` | `Authorization: Bearer <token>` header | `token_env`: env var name |
-| `header` | Custom header | `token_env` + `header_name` |
-| `query` | Query parameter | `token_env` + `query_param` |
+## 🔬 Drift Detection Engine
 
----
-
-## Drift Detection
-
-The diff engine performs recursive structural comparison between your OpenAPI spec schemas and actual API response shapes.
+BarkAPI performs strict structural diffing between standard OpenAPI JSON Schemas and observed JavaScript object trees.
 
 | Drift Type | Severity | What it means |
 |------------|----------|---------------|
-| Removed required field | `breaking` | A field your consumers depend on is gone |
-| Removed optional field | `warning` | A field disappeared but wasn't required |
-| Type changed | `breaking` | Field type shifted (e.g. `string` → `number`) |
-| Nullable → non-null | `breaking` | Consumers handling null will break |
-| Non-null → nullable | `warning` | Field can now be null |
-| Required changed | `breaking` | Required/optional status changed |
-| Enum changed | `warning` | Allowed enum values differ |
-| Format changed | `warning` | Field format differs (e.g. `date-time` missing) |
-| Undocumented field added | `info` | Response has a field not in the spec |
+| Removed required field | 🔴 `breaking` | A field your consumers depend on is gone |
+| Type changed | 🔴 `breaking` | Field type shifted (e.g. `string` → `number`) |
+| Nullable → non-null | 🔴 `breaking` | Consumers handling null will break |
+| Required changed | 🔴 `breaking` | Required/optional status changed |
+| Removed optional field | 🟡 `warning` | A field disappeared but wasn't explicitly required |
+| Non-null → nullable | 🟡 `warning` | Field can now be null |
+| Enum changed | 🟡 `warning` | Allowed enum values differ |
+| Undocumented field | 🔵 `info` | Response has a field not listed in the spec |
 
----
+<br/>
 
-## Dashboard
+## 🖥 Dashboard Experience
 
-The `barkapi dev` command launches a web dashboard at `http://localhost:3100` with:
-
-- **Bento grid layout** — health ring, stat cards, drift distribution at a glance
-- **Schema viewer** — interactive tree of your OpenAPI schema with drift annotations inline
-- **Endpoint health map** — color-coded grid showing status of every endpoint
-- **Drift history** — grouped by field path with side-by-side expected vs actual diffs
-- **Timeline charts** — area charts showing drift trends over time
-- **Breadcrumb navigation** — always know where you are: `Projects > My API > GET /users/{id}`
-- **Alerting** — configure Slack webhook and email notifications
-- **Real-time updates** — auto-refreshes every 3s via shared SQLite database
-
-### Dashboard Pages
+The `barkapi dev` command launches a web dashboard at `http://localhost:3100` with real-time updates:
 
 | Page | Route | Description |
 |------|-------|-------------|
@@ -256,11 +168,11 @@ The `barkapi dev` command launches a web dashboard at `http://localhost:3100` wi
 | **Timeline** | `/projects/:id/timeline` | Area/line/bar charts + check run cards with mini health rings |
 | **Alerts** | `/projects/:id/alerts` | Configure Slack and email notifications with severity filters |
 
----
+<br/>
 
-## Example Project
+## 🧪 Example Project
 
-The [`examples/`](https://github.com/mruduljohn/BarkAPI/tree/main/examples) directory contains a complete demo with intentional drift:
+The [`examples/`](https://github.com/mruduljohn/BarkAPI/tree/main/examples) directory contains a complete demo with intentional drift to see how BarkAPI reacts:
 
 ```bash
 # 1. Start the example API server (has intentional drift from spec)
@@ -277,9 +189,9 @@ The example server returns responses that intentionally differ from its OpenAPI 
 - `GET /api/users/:id` — `email` is a number (spec says string), missing `created_at`, extra `avatar` field
 - `GET /api/products/:id` — `price` is a string (spec says number)
 
----
+<br/>
 
-## CI Integration
+## 🤖 CI Integration
 
 ### GitHub Actions
 
@@ -295,13 +207,13 @@ Or generate a workflow file automatically:
 barkapi ci-gen --base-url-var vars.STAGING_URL
 ```
 
-The `check` command exits with code 1 on breaking drift, failing your pipeline automatically.
+> 💡 The `check` command gracefully exits with code 1 on breaking drift, failing your pipeline automatically.
 
----
+<br/>
 
-## Architecture
+## 🏗 Architecture & Stack
 
-```
+```text
 BarkAPI/
 ├── packages/
 │   ├── core/                   @barkapi/core — shared engine
@@ -309,43 +221,33 @@ BarkAPI/
 │   │       ├── parser/         OpenAPI parser + response schema inferrer
 │   │       ├── diff/           Recursive schema differ + severity classifier
 │   │       ├── db/             SQLite connection, schema migration, queries
-│   │       └── models/         CRUD for projects, endpoints, check runs, drifts, alerts
+│   │       └── models/         CRUD for projects, endpoints, runs, alerts
 │   ├── cli/                    barkapi — the npm package
 │   │   └── src/
-│   │       ├── commands/       init, check, watch, report, dev, diff, ci-gen
+│   │       ├── commands/       init, check, watch, dev, diff, ci-gen
 │   │       ├── config/         .barkapi.yml loader + project detector
-│   │       ├── runner/         HTTP endpoint caller + check orchestrator
-│   │       └── output/         ESLint-style chalk formatter
+│   │       └── runner/         HTTP endpoint caller + check orchestrator
 │   └── dashboard/              @barkapi/dashboard — Next.js web UI
 │       └── app/
-│           ├── api/            REST API routes (projects, endpoints, stats, schema, SSE)
-│           ├── components/     UI primitives, schema viewer, health ring, breadcrumbs
-│           ├── hooks/          usePolling, useSSE (real-time data fetching)
-│           └── projects/       Project pages (health map, detail, timeline, alerts)
+│           ├── api/            REST API routes (SSE, stats, schema)
+│           └── projects/       Project pages (health map, detail, timeline)
 ├── examples/                   Demo project with intentional drift
 │   ├── openapi.yaml            Sample OpenAPI spec
-│   ├── server.js               API server with mismatched responses
-│   └── .barkapi.yml            Pre-configured BarkAPI config
+│   └── server.js               API server with mismatched responses
 ```
 
-### Tech Stack
+### ⚡️ Technologies
 
 | Layer | Technology |
 |-------|-----------|
-| Language | TypeScript (strict) |
-| CLI framework | Commander.js |
-| Terminal UI | chalk + ora |
-| API parsing | @apidevtools/swagger-parser |
-| Database | SQLite via better-sqlite3 (WAL mode) |
-| Web framework | Next.js 14 (App Router) |
-| Styling | Tailwind CSS (dark mode) |
-| Animations | Framer Motion |
-| Charts | Recharts |
-| Icons | Lucide React |
-| Monorepo | npm workspaces |
+| **CLI & Tools** | Commander.js, chalk, ora |
+| **API Parsing** | `@apidevtools/swagger-parser` |
+| **Database** | SQLite via `better-sqlite3` (WAL mode) |
+| **Web UI** | Next.js 14, Tailwind CSS, Framer Motion |
+| **Charts & Icons** | Recharts, Lucide React |
 
----
+<br/>
 
-## License
+## 📝 License
 
-MIT
+Released under the [MIT License](LICENSE).
